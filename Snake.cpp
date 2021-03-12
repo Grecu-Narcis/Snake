@@ -19,25 +19,30 @@ int dy[] = { -1, 0, 1,  0 };
 	direction = 3 -> LEFT
 */
 
-void Snake::drawSnake(RenderWindow& window) {
+void Snake::drawSnake(RenderWindow& window, int size) {
 	for (int i = 1; i < body.size(); i++) {
-		drawSquare(body[i].first * 50 + 5, body[i].second * 50 + 5, Color::Blue, window);
+		drawSquare(body[i].first * size + 5, body[i].second * size + 5, Color::Blue, window, size);
 	}
 
-	drawSquare(body[0].first * 50 + 5, body[0].second * 50 + 5, Color::Magenta, window);
+	drawSquare(body[0].first * size + 5, body[0].second * size + 5, Color::Green, window, size);
+
 
 }
 
 void Snake::moveSnake(int direction) {
+	lastEndOfSnakePosition = body[body.size() - 1];
+
 	for (int i = body.size() - 1; i > 0; i--) {
 		body[i] = body[i - 1];
 	}
-	if ((direction - lastDirection == 2 || direction - lastDirection == -2) && body.size() > 1) {
-		body[0].first += dx[lastDirection];
+
+	if (abs(direction - lastDirection) == 2 && body.size() > 1) {
+		body[0].first  += dx[lastDirection];
 		body[0].second += dy[lastDirection];
 	}
+
 	else {
-		body[0].first += dx[direction];
+		body[0].first  += dx[direction];
 		body[0].second += dy[direction];
 
 		lastDirection = direction;
@@ -47,47 +52,36 @@ void Snake::moveSnake(int direction) {
 bool Snake::isEmpty(pair<int, int> cell) {
 	for (int i = 0; i < body.size(); i++)
 		if (body[i] == cell)
-			return 0;
-	return 1;
+			return false;
+	return true;
 }
 
-bool Snake::hasAteFood(pair<int, int> Food, int direction) {
-	pair<int, int> endOfSnake = body[body.size() - 1];
-
-	if (body[0] == Food) {
-		switch (direction) {
-		case UP:
-			body.push_back(make_pair(endOfSnake.first + dx[DOWN], endOfSnake.second + dy[DOWN]));
-			break;
-
-		case RIGHT:
-			body.push_back(make_pair(endOfSnake.first + dx[LEFT], endOfSnake.second + dy[LEFT]));
-			break;
-
-		case DOWN:
-			body.push_back(make_pair(endOfSnake.first + dx[UP], endOfSnake.second + dy[UP]));
-			break;
-
-		case LEFT:
-			body.push_back(make_pair(endOfSnake.first + dx[RIGHT], endOfSnake.second + dy[RIGHT]));
-			break;
-		} //end switch
-
+bool Snake::hasAteFood(pair<int, int> Food) {
+	if (body[0] == Food) 
 		return true;
-	} //end if
 
 	return false;
 }
 
-bool Snake::hasLost() {
+void Snake::addPieceToBody() {
+	body.push_back(lastEndOfSnakePosition);
+}
+
+bool Snake::hasLost(RenderWindow& window, int size) {
 	for (int i = 1; i < body.size(); i++)
 		if (body[0] == body[i])
 			return true;
 
-	if (body[0].first < 0 || body[0].first > 12)
+	Vector2u windowSize = window.getSize();
+	windowSize.y -= 70;
+
+	windowSize.x /= size;
+	windowSize.y /= size;
+
+	if (body[0].first < 0  || body[0].first >= windowSize.x)
 		return true;
 
-	if (body[0].second < 0 || body[0].second > 8)
+	if (body[0].second < 0 || body[0].second >= windowSize.y)
 		return true;
 
 	return false;
