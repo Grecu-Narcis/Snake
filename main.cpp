@@ -1,112 +1,145 @@
+//Creator Narcis Grecu
+
 #define NOMINMAX
 
 #include <iostream>
+#include <fstream>
 #include <Windows.h>
+#include <string>
 #include "Draw.h"
 #include "Snake.cpp"
 #include "Game.cpp"
+#include "Button.cpp"
 
 using namespace sf;
 using namespace std;
 
-RenderWindow window(VideoMode(605, 405), "Snake");
+char filename[100] = "scor.txt";
 
-Snake mySnake;
+int N = 18, M = 12;
+int tileSize = 40;
 
-pair<int, int> Food;
-bool existFood;
+int width = N * tileSize, height = M * tileSize + 70;
 
-auto windowSize = window.getSize();
+RenderWindow window(VideoMode(width + 5, height + 5), "Snake");
+
+bool hasPressedStartButton, ok;
 
 Clock myClock;
-Time myTime;
 
+float timer;
 
-int main() {
-	system("pause");
+int main(){
+	Game game;
 
 	window.setFramerateLimit(60);
-
-	myTime = myClock.getElapsedTime();
-	myClock.restart();
-
-	RectangleShape square(Vector2f(45, 45));
-	square.setFillColor(Color::Blue);
-	square.setPosition(Vector2f(5, 5));
+	window.setKeyRepeatEnabled(false);
 
 	int direction = 1;
-	
 
-	drawTable(window);
-	mySnake.drawSnake(window);
-	window.display();
+	Button startButton = Button(300, 225, 100, 50, "Start");
 
 	while (window.isOpen()) {
-		myTime = myClock.getElapsedTime();
+		Event event;
 
+		if (!hasPressedStartButton) {
+			while (window.pollEvent(event)) {
+				if (event.type == Event::Closed)
+					window.close();
 
-		if (myTime.asSeconds() > 0.25) {
+				window.clear();
+				startButton.display(window);
+
+				if (startButton.isClicked(window)) {
+					Sleep(200);
+					hasPressedStartButton = 1;
+				}
+
+				window.display();
+			}
+		}
+
+		else {
+
+			timer += myClock.getElapsedTime().asSeconds();
 			myClock.restart();
-
-			Event event;
 
 
 			while (window.pollEvent(event)) {
 				if (event.type == Event::Closed)
 					window.close();
 
-				else if (event.type == Event::KeyPressed) {
-					switch (event.key.code) {
-					case Keyboard::Up:
-						direction = 0;
-						break;
+				if (!game.getGameStatus()) {
+					if (event.type == Event::KeyPressed) {
+						switch (event.key.code) {
+						case Keyboard::Up:
+							if (direction != 0) {
+								direction = 0;
+								game.updateSnake(window, direction);
+								game.displaySnake(window);
+								timer = 0;
+							}
+							break;
 
-					case Keyboard::Right:
-						direction = 1;
-						break;
+						case Keyboard::Right:
+							if (direction != 1) {
+								direction = 1;
+								game.updateSnake(window, direction);
+								game.displaySnake(window);
+								timer = 0;
+							}
+							break;
 
-					case Keyboard::Down:
-						direction = 2;
-						break;
+						case Keyboard::Down:
+							if (direction != 2) {
+								direction = 2;
+								game.updateSnake(window, direction);
+								game.displaySnake(window);
+								timer = 0;
+							}
+							break;
 
-					case Keyboard::Left:
-						direction = 3;						 
-						break;
+						case Keyboard::Left:
+							if (direction != 3) {
+								direction = 3;
+								game.updateSnake(window, direction);
+								game.displaySnake(window);
+								timer = 0;
+							}
+							break;
 
-					
-					}//end switch
 
-				}//end if - keyPressed
+						}//sfarsit switch
 
-			}//end while - window.PollEvent
+					}//sfarsit if - keyPressed
+				}
+			}//sfarsit while - window.PollEvent
 
-			if (!existFood) {
-				existFood = true;
-				do {
-					Food = generateFood();
-				} while (!mySnake.isEmpty(Food));
+			if (!game.getGameStatus()) {
+				if (timer > 0.2) {
+					timer = 0;
+					game.updateSnake(window, direction);
+				}
 			}
 			window.clear();
 
-			drawTable(window);
-			drawFood(Food, window);
-			mySnake.moveSnake(direction);
-			mySnake.drawSnake(window);
-
-			if (mySnake.hasAteFood(Food, direction)) {
-				existFood = false;
-			}
-
+			drawTable(window, tileSize);
+			game.displayFood(window);
+			game.displaySnake(window);
+			game.displayScores(window);
 
 			window.display();
 
 
-			if (mySnake.hasLost())
-				system("pause");
+			if (game.getGameStatus()) {
+				game.setScoreText("You lost!");
+				game.setHighScoreText("Your score: " + to_string(game.getScore())
+									+ "\nHigh score: " + to_string(game.getHighScore()));
 
-		}//end if - time > 0.3s
-
-	}//end while - window is open
+				game.updateHighScore(filename);
+			}
+		}
+	}//sfarsit while - window is open
 
 	return 0;
 }
