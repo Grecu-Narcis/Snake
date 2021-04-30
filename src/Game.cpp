@@ -7,7 +7,7 @@ Game::Game() {
 	height = 10, width = 20, size = 32;
 	window.create(sf::VideoMode(width * size, height * size + 40), "Snake");
 	window.setFramerateLimit(60);
-	font.loadFromFile("NotoSans-Bold.ttf");
+	font.loadFromFile("fonts/NotoSans-Bold.ttf");
 }
 
 void Game::pushState(State* state) {
